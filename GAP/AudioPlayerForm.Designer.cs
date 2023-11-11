@@ -170,12 +170,12 @@ namespace GAP
             volumeButton.ButtonImage = Properties.Resources.volume_on;
             volumeButton.ButtonPressedColor = Color.FromArgb(48, 48, 48);
             volumeButton.Cursor = Cursors.Hand;
-            volumeButton.Location = new Point(672, 106);
+            volumeButton.Location = new Point(674, 106);
             volumeButton.Name = "volumeButton";
             volumeButton.Size = new Size(40, 40);
             volumeButton.TabIndex = 7;
             volumeButton.Text = "volumeButton";
-            volumeButton.Click += VolumeButton_Click;
+            volumeButton.MouseUp += VolumeButton_MouseUp;
             // 
             // equalizerButton
             // 
@@ -207,7 +207,7 @@ namespace GAP
             forwardButton.Size = new Size(50, 50);
             forwardButton.TabIndex = 5;
             forwardButton.Text = "circularImageButton1";
-            forwardButton.Click += ForwardButton_Click;
+            forwardButton.MouseUp += ForwardButton_MouseUp;
             // 
             // playPauseButton
             // 
@@ -223,7 +223,7 @@ namespace GAP
             playPauseButton.Size = new Size(80, 80);
             playPauseButton.TabIndex = 4;
             playPauseButton.Text = "playPauseButton";
-            playPauseButton.Click += PlayPauseButton_Click;
+            playPauseButton.MouseUp += PlayPauseButton_MouseUp;
             // 
             // rewindButton
             // 
@@ -238,7 +238,7 @@ namespace GAP
             rewindButton.Size = new Size(50, 50);
             rewindButton.TabIndex = 3;
             rewindButton.Text = "rewindButton";
-            rewindButton.Click += RewindButton_Click;
+            rewindButton.MouseUp += RewindButton_MouseUp;
             // 
             // totalTime
             // 

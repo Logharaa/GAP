@@ -14,11 +14,10 @@ namespace GAP.CustomControls
         private int _sliderBarHeight = 7;
         private int _knobRadius = 12;
 
-        public delegate void OnValueChanged(int newValue);
+        public delegate void OnValueChanged(int oldValue, int newValue);
         public event OnValueChanged? ValueChanged;
 
-        public delegate void OnFinishedDragging(int newValue);
-        public event OnFinishedDragging? FinishedDragging;
+        public event EventHandler<int>? FinishedDragging;
 
         [DefaultValue(0)]
         public int Minimum
@@ -58,15 +57,18 @@ namespace GAP.CustomControls
             get => _value;
             set
             {
-                // Make sure _value is within the range [Minimum, Maximum].
-                if (value < Minimum)
-                    _value = Minimum;
-                else if (value > Maximum)
-                    _value = Maximum;
-                else
-                    _value = value;
+                int newValue;
 
-                ValueChanged?.Invoke(value);
+                // Make sure newValue is within the range [Minimum, Maximum].
+                if (value < Minimum)
+                    newValue = Minimum;
+                else if (value > Maximum)
+                    newValue = Maximum;
+                else
+                    newValue = value;
+
+                ValueChanged?.Invoke(_value, newValue);
+                _value = newValue;
 
                 Invalidate();
             }
@@ -104,8 +106,6 @@ namespace GAP.CustomControls
                 true);
 
             BackColor = Color.Transparent;
-
-            Debug.WriteLine($"Minimum: ${Minimum}\nMaximum: ${Maximum}");
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -191,7 +191,7 @@ namespace GAP.CustomControls
             if (_isDragging)
             {
                 _isDragging = false;
-                FinishedDragging?.Invoke(Value);
+                FinishedDragging?.Invoke(this, Value);
             }
         }
 

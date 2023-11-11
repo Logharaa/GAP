@@ -1,4 +1,5 @@
 using NAudio.Wave;
+using System.Diagnostics;
 
 namespace GAP
 {
@@ -9,6 +10,7 @@ namespace GAP
         private string? _audioFilePath;
         private bool _isPlaying = false;
         private bool _isDraggingAudioSlider = false;
+        private int _volumeBeforeMute = 50;
 
         public AudioPlayerForm()
         {
@@ -63,7 +65,7 @@ namespace GAP
             }
         }
 
-        private void PlayPauseButton_Click(object sender, EventArgs e)
+        private void PlayPauseButton_MouseUp(object sender, MouseEventArgs e)
         {
             if (_audioFilePath == null)
                 return;
@@ -90,7 +92,7 @@ namespace GAP
             }
         }
 
-        private void RewindButton_Click(object sender, EventArgs e)
+        private void RewindButton_MouseUp(object sender, MouseEventArgs e)
         {
             if (_audioFilePath == null || _audioFileReader == null || _wasapiOut == null)
                 return;
@@ -105,7 +107,7 @@ namespace GAP
             UpdateAudioSlider();
         }
 
-        private void ForwardButton_Click(object sender, EventArgs e)
+        private void ForwardButton_MouseUp(object sender, MouseEventArgs e)
         {
             if (_audioFilePath == null || _audioFileReader == null || _wasapiOut == null)
                 return;
@@ -139,7 +141,10 @@ namespace GAP
         {
             _wasapiOut = new();
             _wasapiOut.PlaybackStopped += OnPlaybackStopped;
-            _audioFileReader = new(_audioFilePath);
+            _audioFileReader = new(_audioFilePath)
+            {
+                Volume = GetNormalizedVolume(volumeSlider.Value)
+            };
             _wasapiOut.Init(_audioFileReader);
         }
 
@@ -179,12 +184,12 @@ namespace GAP
                 UpdateAudioSlider();
         }
 
-        private void AudioSlider_ValueChanged(int newValue)
+        private void AudioSlider_ValueChanged(int oldValue, int newValue)
         {
             currentTime.Text = TimeSpan.FromSeconds(newValue).ToString(@"mm\:ss");
         }
 
-        private void AudioSlider_FinishedDragging(int newValue)
+        private void AudioSlider_FinishedDragging(object sender, int newValue)
         {
             if (_audioFileReader != null)
             {
@@ -203,27 +208,47 @@ namespace GAP
             _isDraggingAudioSlider = false;
         }
 
-        private void VolumeSlider_ValueChanged(int newValue)
+        private void VolumeSlider_ValueChanged(int oldValue, int newValue)
         {
-            if (newValue == volumeSlider.Minimum)
+            if (newValue == volumeSlider.Minimum
+                && oldValue > volumeSlider.Minimum)
             {
-                if (volumeButton.ButtonImage != Properties.Resources.volume_off)
-                    volumeButton.ButtonImage = Properties.Resources.volume_off;
+                volumeButton.ButtonImage = Properties.Resources.volume_off;
+            }
+            else if (newValue > volumeSlider.Minimum
+                && oldValue == volumeSlider.Minimum)
+            {
+                volumeButton.ButtonImage = Properties.Resources.volume_on;
+            }
+
+            if (_audioFileReader != null)
+                _audioFileReader.Volume = GetNormalizedVolume(newValue);
+        }
+
+        private void VolumeButton_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (volumeSlider.Value != volumeSlider.Minimum)
+            {
+                _volumeBeforeMute = volumeSlider.Value;
+                volumeSlider.Value = 0;
+                if (_audioFileReader != null)
+                    _audioFileReader.Volume = 0.0f;
             }
             else
             {
-                if (volumeButton.ButtonImage != Properties.Resources.volume_on)
-                    volumeButton.ButtonImage = Properties.Resources.volume_on;
+                volumeSlider.Value = _volumeBeforeMute;
+                if (_audioFileReader != null)
+                    _audioFileReader.Volume = GetNormalizedVolume(_volumeBeforeMute);
             }
         }
 
-        private void VolumeButton_Click(object sender, EventArgs e)
-        {
 
+        private static float GetNormalizedVolume(int value)
+        {
+            return (float)Math.Pow(value * 0.01f, 2.7);
         }
 
-
-        private int GetSecondsFromTimeSpan(TimeSpan ts)
+        private static int GetSecondsFromTimeSpan(TimeSpan ts)
         {
             return (int)(ts.TotalSeconds + 0.5);
         }

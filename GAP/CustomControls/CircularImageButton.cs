@@ -78,8 +78,6 @@ namespace GAP.CustomControls
                 true);
 
             BackColor = Color.Transparent;
-
-            Debug.WriteLine("CircularImageButton constructor!");
         }
 
         protected override void OnPaint(PaintEventArgs e)
