@@ -1,6 +1,5 @@
 ﻿using Plasmoid.Extensions;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing.Drawing2D;
 
 namespace GAP.CustomControls
@@ -57,20 +56,18 @@ namespace GAP.CustomControls
             get => _value;
             set
             {
-                int newValue;
-
-                // Make sure newValue is within the range [Minimum, Maximum].
+                // Make sure value is within the range [Minimum, Maximum].
                 if (value < Minimum)
-                    newValue = Minimum;
+                    value = Minimum;
                 else if (value > Maximum)
-                    newValue = Maximum;
-                else
-                    newValue = value;
+                    value = Maximum;
 
-                ValueChanged?.Invoke(_value, newValue);
-                _value = newValue;
-
-                Invalidate();
+                if (_value != value)
+                {
+                    ValueChanged?.Invoke(_value, value);
+                    _value = value;
+                    Invalidate();
+                }
             }
         }
 
@@ -204,14 +201,7 @@ namespace GAP.CustomControls
         private void UpdateCurrentValue(int mouseX)
         {
             // Convert pixel range to slider range (linear conversion).
-            int newValue = ((mouseX - KnobRadius) * (Maximum - Minimum) / GetSliderBarWidth()) + Minimum;
-
-            if (newValue >= Minimum
-                && newValue <= Maximum
-                && newValue != Value)
-            {
-                Value = newValue;
-            }
+            Value = ((mouseX - KnobRadius) * (Maximum - Minimum) / GetSliderBarWidth()) + Minimum;
         }
     }
 }

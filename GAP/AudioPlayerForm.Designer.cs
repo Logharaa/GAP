@@ -51,6 +51,8 @@ namespace GAP
             totalTime = new Label();
             currentTime = new Label();
             audioSlider = new HorizontalSlider();
+            peakMeterLeftChannel = new PeakMeter();
+            peakMeterRightChannel = new PeakMeter();
             menuStrip.SuspendLayout();
             playerButtonsPanel.SuspendLayout();
             SuspendLayout();
@@ -111,7 +113,7 @@ namespace GAP
             audioFileName.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             audioFileName.AutoSize = true;
             audioFileName.Font = new Font("Inter SemiBold", 20.25F, FontStyle.Bold, GraphicsUnit.Point);
-            audioFileName.ForeColor = Color.FromArgb(88, 88, 88);
+            audioFileName.ForeColor = Color.FromArgb(78, 78, 78);
             audioFileName.Location = new Point(42, 407);
             audioFileName.Name = "audioFileName";
             audioFileName.Size = new Size(258, 33);
@@ -278,12 +280,34 @@ namespace GAP
             audioSlider.MouseDown += AudioSlider_MouseDown;
             audioSlider.MouseUp += AudioSlider_MouseUp;
             // 
+            // peakMeterLeftChannel
+            // 
+            peakMeterLeftChannel.Amplitude = 0.0001F;
+            peakMeterLeftChannel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            peakMeterLeftChannel.Location = new Point(120, 84);
+            peakMeterLeftChannel.Name = "peakMeterLeftChannel";
+            peakMeterLeftChannel.Size = new Size(35, 285);
+            peakMeterLeftChannel.TabIndex = 5;
+            peakMeterLeftChannel.Text = "peakMeterLeftChannel";
+            // 
+            // peakMeterRightChannel
+            // 
+            peakMeterRightChannel.Amplitude = 0.0001F;
+            peakMeterRightChannel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            peakMeterRightChannel.Location = new Point(164, 84);
+            peakMeterRightChannel.Name = "peakMeterRightChannel";
+            peakMeterRightChannel.Size = new Size(35, 285);
+            peakMeterRightChannel.TabIndex = 6;
+            peakMeterRightChannel.Text = "peakMeterRightChannel";
+            // 
             // AudioPlayerForm
             // 
             AutoScaleDimensions = new SizeF(10F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(24, 24, 24);
             ClientSize = new Size(984, 711);
+            Controls.Add(peakMeterRightChannel);
+            Controls.Add(peakMeterLeftChannel);
             Controls.Add(playerButtonsPanel);
             Controls.Add(audioFileName);
             Controls.Add(menuStrip);
@@ -292,7 +316,7 @@ namespace GAP
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip;
             Margin = new Padding(4);
-            MinimumSize = new Size(700, 0);
+            MinimumSize = new Size(700, 700);
             Name = "AudioPlayerForm";
             Padding = new Padding(0, 1, 0, 1);
             Text = "GAP";
@@ -325,5 +349,7 @@ namespace GAP
         private Button equalizerButton;
         private CircularImageButton volumeButton;
         private HorizontalSlider volumeSlider;
+        private PeakMeter peakMeterLeftChannel;
+        private PeakMeter peakMeterRightChannel;
     }
 }

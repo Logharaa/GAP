@@ -1,5 +1,5 @@
 using NAudio.Wave;
-using System.Diagnostics;
+using NAudio.Wave.SampleProviders;
 
 namespace GAP
 {
@@ -7,6 +7,7 @@ namespace GAP
     {
         private WasapiOut? _wasapiOut;
         private AudioFileReader? _audioFileReader;
+        private MeteringSampleProvider? _audioAmplitudeMeter;
         private string? _audioFilePath;
         private bool _isPlaying = false;
         private bool _isDraggingAudioSlider = false;
@@ -58,7 +59,7 @@ namespace GAP
                 ResetAudioSlider();
                 _audioFilePath = openAudioFileDialog.FileName;
                 audioFileName.Text = openAudioFileDialog.SafeFileName;
-                audioFileName.ForeColor = Color.FromArgb(184, 184, 184);
+                audioFileName.ForeColor = Color.FromArgb(208, 208, 208);
                 InitAudio();
                 audioSlider.Maximum = GetSecondsFromTimeSpan(_audioFileReader!.TotalTime);
                 totalTime.Text = _audioFileReader!.TotalTime.ToString(@"mm\:ss");
@@ -75,6 +76,8 @@ namespace GAP
                 _wasapiOut?.Pause();
                 audioSliderTimer.Stop();
                 playPauseButton.ButtonImage = Properties.Resources.play_arrow;
+                peakMeterLeftChannel.StopSmoothly();
+                peakMeterRightChannel.StopSmoothly();
                 _isPlaying = false;
             }
             else
@@ -133,19 +136,34 @@ namespace GAP
             audioSliderTimer.Stop();
             ResetAudioSlider();
             playPauseButton.ButtonImage = Properties.Resources.play_arrow;
+            peakMeterLeftChannel.StopSmoothly();
+            peakMeterRightChannel.StopSmoothly();
             _isPlaying = false;
             CleanUpAudio();
+        }
+
+        private void OnStreamVolume(object? sender, StreamVolumeEventArgs e)
+        {
+            if (_audioFileReader!.WaveFormat.Channels == 2)
+            {
+                peakMeterLeftChannel.Amplitude = e.MaxSampleValues[0];
+                peakMeterRightChannel.Amplitude = e.MaxSampleValues[1];
+            }
+            else
+            {
+                peakMeterLeftChannel.Amplitude = e.MaxSampleValues[0];
+                peakMeterRightChannel.Amplitude = e.MaxSampleValues[0];
+            }
         }
 
         private void InitAudio()
         {
             _wasapiOut = new();
             _wasapiOut.PlaybackStopped += OnPlaybackStopped;
-            _audioFileReader = new(_audioFilePath)
-            {
-                Volume = GetNormalizedVolume(volumeSlider.Value)
-            };
-            _wasapiOut.Init(_audioFileReader);
+            _audioFileReader = new(_audioFilePath) { Volume = GetNormalizedVolume(volumeSlider.Value) };
+            _audioAmplitudeMeter = new(_audioFileReader, _audioFileReader.WaveFormat.SampleRate / 48);
+            _audioAmplitudeMeter.StreamVolume += OnStreamVolume;
+            _wasapiOut.Init(_audioAmplitudeMeter);
         }
 
         private void CleanUpAudio()
@@ -245,7 +263,11 @@ namespace GAP
 
         private static float GetNormalizedVolume(int value)
         {
-            return (float)Math.Pow(value * 0.01f, 2.7);
+            // I use power scale instead of decibel scale because volume transition
+            // still feels smooth and it can represent complete silence,
+            // unlike decibel scale where I would have to choose an arbitrary
+            // minimum value like -60 dB (complete silence being -inf dB).
+            return (float)Math.Pow(value * 0.01f, 2);
         }
 
         private static int GetSecondsFromTimeSpan(TimeSpan ts)
