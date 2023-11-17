@@ -13,6 +13,10 @@ namespace GAP.CustomControls
         private int _sliderBarHeight = 7;
         private int _knobRadius = 12;
 
+        private readonly SolidBrush _sliderBarBrush = new(Color.FromArgb(78, 78, 78));
+        private readonly SolidBrush _sliderOffsetBarBrush = new(Color.FromArgb(255, 148, 112));
+        private readonly SolidBrush _sliderKnobBrush = new(Color.FromArgb(255, 255, 255));
+
         public delegate void OnValueChanged(int oldValue, int newValue);
         public event OnValueChanged? ValueChanged;
 
@@ -118,16 +122,13 @@ namespace GAP.CustomControls
 
             int sliderBarWidth = GetSliderBarWidth();
 
-            using (SolidBrush sliderBarBrush = new(Color.FromArgb(78, 78, 78)))
-            {
-                g.FillRoundedRectangle(
-                    sliderBarBrush,
-                    sliderBarX,
-                    sliderBarY,
-                    sliderBarWidth,
-                    SliderBarHeight,
-                    8);
-            }
+            g.FillRoundedRectangle(
+                _sliderBarBrush,
+                sliderBarX,
+                sliderBarY,
+                sliderBarWidth,
+                SliderBarHeight,
+                8);
 
             // Convert slider range to pixel range (linear conversion).
             int sliderKnobX;
@@ -138,28 +139,21 @@ namespace GAP.CustomControls
 
             if (sliderKnobX > 0)
             {
-                using (SolidBrush sliderOffsetBarBrush = new(Color.FromArgb(255, 148, 112)))
-                {
-                    g.FillRoundedRectangle(
-                        sliderOffsetBarBrush,
-                        sliderBarX,
-                        sliderBarY,
-                        sliderKnobX,
-                        SliderBarHeight,
-                        8);
-                }
-                
+                g.FillRoundedRectangle(
+                    _sliderOffsetBarBrush,
+                    sliderBarX,
+                    sliderBarY,
+                    sliderKnobX,
+                    SliderBarHeight,
+                    8);
             }
 
-            using (SolidBrush sliderKnobBrush = new(Color.FromArgb(255, 255, 255)))
-            {
-                g.FillEllipse(
-                    sliderKnobBrush,
-                    sliderKnobX,
-                    sliderBarY - KnobRadius + (int)(SliderBarHeight * 0.5),
-                    KnobRadius * 2 - 1,
-                    KnobRadius * 2 - 1);
-            }
+            g.FillEllipse(
+                _sliderKnobBrush,
+                sliderKnobX,
+                sliderBarY - KnobRadius + SliderBarHeight/2,
+                KnobRadius * 2 - 1,
+                KnobRadius * 2 - 1);
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -202,6 +196,18 @@ namespace GAP.CustomControls
         {
             // Convert pixel range to slider range (linear conversion).
             Value = ((mouseX - KnobRadius) * (Maximum - Minimum) / GetSliderBarWidth()) + Minimum;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _sliderBarBrush.Dispose();
+                _sliderOffsetBarBrush.Dispose();
+                _sliderKnobBrush.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

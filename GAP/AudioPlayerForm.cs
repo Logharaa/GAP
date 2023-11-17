@@ -1,3 +1,4 @@
+using GAP.SampleProviders;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -7,7 +8,8 @@ namespace GAP
     {
         private WasapiOut? _wasapiOut;
         private AudioFileReader? _audioFileReader;
-        private MeteringSampleProvider? _audioAmplitudeMeter;
+        private MeteringSampleProvider? _amplitudeProvider;
+        private FourierTransformProvider? _fourierTransformProvider;
         private string? _audioFilePath;
         private bool _isPlaying = false;
         private bool _isDraggingAudioSlider = false;
@@ -76,8 +78,7 @@ namespace GAP
                 _wasapiOut?.Pause();
                 audioSliderTimer.Stop();
                 playPauseButton.ButtonImage = Properties.Resources.play_arrow;
-                peakMeterLeftChannel.StopSmoothly();
-                peakMeterRightChannel.StopSmoothly();
+                StopVisualizationsSmoothly();
                 _isPlaying = false;
             }
             else
@@ -91,6 +92,7 @@ namespace GAP
                 _wasapiOut?.Play();
                 audioSliderTimer.Start();
                 playPauseButton.ButtonImage = Properties.Resources.pause;
+                EnsureVisualizationsReady();
                 _isPlaying = true;
             }
         }
@@ -136,24 +138,40 @@ namespace GAP
             audioSliderTimer.Stop();
             ResetAudioSlider();
             playPauseButton.ButtonImage = Properties.Resources.play_arrow;
-            peakMeterLeftChannel.StopSmoothly();
-            peakMeterRightChannel.StopSmoothly();
+            StopVisualizationsSmoothly();
             _isPlaying = false;
             CleanUpAudio();
         }
 
+        private void StopVisualizationsSmoothly()
+        {
+            peakMeterLeftChannel.StopSmoothly();
+            peakMeterRightChannel.StopSmoothly();
+            spectrumAnalyzer.StopSmoothly();
+        }
+
+        private void EnsureVisualizationsReady()
+        {
+            // Handle corner case where the user replays the audio before
+            // the visualizations has finished stopping smoothly.
+            peakMeterLeftChannel.EndStoppingAnimation();
+            peakMeterRightChannel.EndStoppingAnimation();
+            spectrumAnalyzer.EndStoppingAnimation();
+        }
+
         private void OnStreamVolume(object? sender, StreamVolumeEventArgs e)
         {
+            peakMeterLeftChannel.Amplitude = e.MaxSampleValues[0];
+
             if (_audioFileReader!.WaveFormat.Channels == 2)
-            {
-                peakMeterLeftChannel.Amplitude = e.MaxSampleValues[0];
                 peakMeterRightChannel.Amplitude = e.MaxSampleValues[1];
-            }
             else
-            {
-                peakMeterLeftChannel.Amplitude = e.MaxSampleValues[0];
                 peakMeterRightChannel.Amplitude = e.MaxSampleValues[0];
-            }
+        }
+
+        private void OnFftCalculated(object? sender, FftEventArgs e)
+        {
+            spectrumAnalyzer.FftResults = e.Results;
         }
 
         private void InitAudio()
@@ -161,9 +179,11 @@ namespace GAP
             _wasapiOut = new();
             _wasapiOut.PlaybackStopped += OnPlaybackStopped;
             _audioFileReader = new(_audioFilePath) { Volume = GetNormalizedVolume(volumeSlider.Value) };
-            _audioAmplitudeMeter = new(_audioFileReader, _audioFileReader.WaveFormat.SampleRate / 48);
-            _audioAmplitudeMeter.StreamVolume += OnStreamVolume;
-            _wasapiOut.Init(_audioAmplitudeMeter);
+            _amplitudeProvider = new(_audioFileReader, _audioFileReader.WaveFormat.SampleRate / 48);
+            _amplitudeProvider.StreamVolume += OnStreamVolume;
+            _fourierTransformProvider = new(_amplitudeProvider);
+            _fourierTransformProvider.FftCalculated += OnFftCalculated;
+            _wasapiOut.Init(_fourierTransformProvider);
         }
 
         private void CleanUpAudio()

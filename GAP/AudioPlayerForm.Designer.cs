@@ -53,6 +53,7 @@ namespace GAP
             audioSlider = new HorizontalSlider();
             peakMeterLeftChannel = new PeakMeter();
             peakMeterRightChannel = new PeakMeter();
+            spectrumAnalyzer = new SpectrumAnalyzer();
             menuStrip.SuspendLayout();
             playerButtonsPanel.SuspendLayout();
             SuspendLayout();
@@ -284,9 +285,9 @@ namespace GAP
             // 
             peakMeterLeftChannel.Amplitude = 0.0001F;
             peakMeterLeftChannel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            peakMeterLeftChannel.Location = new Point(120, 84);
+            peakMeterLeftChannel.Location = new Point(128, 94);
             peakMeterLeftChannel.Name = "peakMeterLeftChannel";
-            peakMeterLeftChannel.Size = new Size(35, 285);
+            peakMeterLeftChannel.Size = new Size(35, 265);
             peakMeterLeftChannel.TabIndex = 5;
             peakMeterLeftChannel.Text = "peakMeterLeftChannel";
             // 
@@ -294,11 +295,21 @@ namespace GAP
             // 
             peakMeterRightChannel.Amplitude = 0.0001F;
             peakMeterRightChannel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            peakMeterRightChannel.Location = new Point(164, 84);
+            peakMeterRightChannel.Location = new Point(172, 94);
             peakMeterRightChannel.Name = "peakMeterRightChannel";
-            peakMeterRightChannel.Size = new Size(35, 285);
+            peakMeterRightChannel.Size = new Size(35, 265);
             peakMeterRightChannel.TabIndex = 6;
             peakMeterRightChannel.Text = "peakMeterRightChannel";
+            // 
+            // spectrumAnalyzer
+            // 
+            spectrumAnalyzer.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            spectrumAnalyzer.FftResults = null;
+            spectrumAnalyzer.Location = new Point(271, 94);
+            spectrumAnalyzer.Name = "spectrumAnalyzer";
+            spectrumAnalyzer.Size = new Size(585, 265);
+            spectrumAnalyzer.TabIndex = 7;
+            spectrumAnalyzer.Text = "spectrumAnalyzer";
             // 
             // AudioPlayerForm
             // 
@@ -306,6 +317,7 @@ namespace GAP
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(24, 24, 24);
             ClientSize = new Size(984, 711);
+            Controls.Add(spectrumAnalyzer);
             Controls.Add(peakMeterRightChannel);
             Controls.Add(peakMeterLeftChannel);
             Controls.Add(playerButtonsPanel);
@@ -351,5 +363,6 @@ namespace GAP
         private HorizontalSlider volumeSlider;
         private PeakMeter peakMeterLeftChannel;
         private PeakMeter peakMeterRightChannel;
+        private SpectrumAnalyzer spectrumAnalyzer;
     }
 }

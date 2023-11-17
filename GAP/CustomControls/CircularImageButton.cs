@@ -111,8 +111,8 @@ namespace GAP.CustomControls
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
                 // Top left corner coordinates of the image.
-                int imageX = (int)(Width * 0.5) - (int)(ButtonImageSize.Width * 0.5);
-                int imageY = (int)(Height * 0.5) - (int)(ButtonImageSize.Height * 0.5);
+                int imageX = (int)(Width*0.5 - ButtonImageSize.Width*0.5);
+                int imageY = (int)(Height*0.5 - ButtonImageSize.Height*0.5);
 
                 g.DrawImage(
                     ButtonImage,

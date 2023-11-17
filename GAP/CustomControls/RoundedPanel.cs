@@ -8,6 +8,8 @@ namespace GAP.CustomControls
         private Color _panelColor = Color.FromArgb(48, 48, 48);
         private int _roundingRadius = 12;
 
+        private SolidBrush _panelBrush;
+
         [DefaultValue(typeof(Color), "48, 48, 48")]
         public Color PanelColor
         {
@@ -15,6 +17,7 @@ namespace GAP.CustomControls
             set
             {
                 _panelColor = value;
+                _panelBrush = new(value);
                 Invalidate();
             }
         }
@@ -39,22 +42,30 @@ namespace GAP.CustomControls
                 true);
 
             BackColor = Color.Transparent;
+            _panelBrush = new(_panelColor);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
-            using (SolidBrush panelBrush = new(PanelColor))
+            e.Graphics.FillRoundedRectangle(
+                _panelBrush,
+                0,
+                0,
+                Width,
+                Height,
+                RoundingRadius);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                e.Graphics.FillRoundedRectangle(
-                    panelBrush,
-                    0,
-                    0,
-                    Width,
-                    Height,
-                    RoundingRadius);
+                _panelBrush.Dispose();
             }
+
+            base.Dispose(disposing);
         }
     }
 }

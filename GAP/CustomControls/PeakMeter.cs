@@ -6,8 +6,16 @@ namespace GAP.CustomControls
     public class PeakMeter : Control
     {
         private float _amplitude = 0.0001f; // -80 dB
-        private float _smoothNormalizedDb = 0.0f;
-        private System.Windows.Forms.Timer _timer = new();
+        
+        private float _maxDb = 6.0f;
+        private float _minDb = -48.0f;
+        private float _decibelsRange = 54.0f;
+        private float _smoothDbNormalized = 0.0f;
+
+        private readonly SolidBrush _backgroundBrush = new(Color.FromArgb(34, 34, 34));
+        private readonly Pen _zeroDbLinePen = new(Color.FromArgb(58, 58, 58), 1);
+        private readonly SolidBrush _clippingBrush = new(Color.FromArgb(163, 24, 24));
+        private readonly System.Windows.Forms.Timer _smoothStopTimer = new();
 
         public float Amplitude
         {
@@ -20,14 +28,27 @@ namespace GAP.CustomControls
         }
 
         [DefaultValue(6.0f)]
-        public float MaxDb { get; set; } = 6.0f;
+        public float MaxDb
+        {
+            get => _maxDb;
+            set
+            {
+                _maxDb = value;
+                _decibelsRange = value - _minDb;
+                Invalidate();
+            }
+        }
 
         [DefaultValue(-48.0f)]
-        public float MinDb { get; set; } = -48.0f;
-
-        public float DecibelsRange
+        public float MinDb
         {
-            get => MaxDb - MinDb;
+            get => _minDb;
+            set
+            {
+                _minDb = value;
+                _decibelsRange = _maxDb - value;
+                Invalidate();
+            }
         }
 
         [DefaultValue(0.18f)]
@@ -41,8 +62,8 @@ namespace GAP.CustomControls
                 | ControlStyles.OptimizedDoubleBuffer,
                 true);
 
-            _timer.Interval = 1000 / 48; // 48 ticks per second.
-            _timer.Tick += PeakMeter_Tick;
+            _smoothStopTimer.Interval = 1000 / 48; // 48 ticks per second.
+            _smoothStopTimer.Tick += PeakMeter_Tick;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -50,42 +71,31 @@ namespace GAP.CustomControls
             base.OnPaint(e);
             Graphics g = e.Graphics;
 
-            int zeroDbLocationY = Height - (int)(-MinDb * Height / DecibelsRange); // Linear conversion.
-
             // Background of the peak meter.
-            using (SolidBrush backgroundBrush = new(Color.FromArgb(48, 48, 48)))
-            {
-                g.FillRectangle(backgroundBrush, 0, 0, Width, Height);
-            }
+            g.FillRectangle(_backgroundBrush, 0, 0, Width, Height);
 
-            using (Pen linePen = new(Color.FromArgb(68, 68, 68), 1))
-            {
-                g.DrawLine(linePen,
-                    5,
-                    zeroDbLocationY,
-                    Width - 5,
-                    zeroDbLocationY);
-            }
+            int zeroDbLocationY = Height - (int)(-MinDb * Height / _decibelsRange); // Linear conversion.
+            g.DrawLine(_zeroDbLinePen, 5, zeroDbLocationY, Width - 5, zeroDbLocationY);
 
             float decibels = GetDecibelsFromAmplitude(Amplitude);
 
             // Normalize decibels to [0, 1] range.
-            float normalizedDb = (decibels - MinDb) / DecibelsRange;
+            float dbNormalized = (decibels - MinDb) / _decibelsRange;
 
-            // Smooth the signal.
-            if (normalizedDb > _smoothNormalizedDb)
+            // Interpolate with previous value to smooth the movement.
+            if (dbNormalized > _smoothDbNormalized)
             {
-                _smoothNormalizedDb = normalizedDb;
+                _smoothDbNormalized = dbNormalized;
             }
             else
             {
-                _smoothNormalizedDb -= (_smoothNormalizedDb - normalizedDb) * SmoothFactor;
+                _smoothDbNormalized -= (_smoothDbNormalized - dbNormalized) * SmoothFactor;
 
-                if (_smoothNormalizedDb < 0.001f)
-                    _smoothNormalizedDb = 0.0f;
+                if (_smoothDbNormalized < 0.001f)
+                    _smoothDbNormalized = 0.0f;
             }
 
-            int peakRectHeight = (int)(Height * _smoothNormalizedDb);
+            int peakRectHeight = (int)(Height * _smoothDbNormalized);
 
             using LinearGradientBrush rectBrush = new(
                 new Point(0, Height),
@@ -93,6 +103,7 @@ namespace GAP.CustomControls
                 Color.FromArgb(255, 255, 255),
                 Color.FromArgb(255, 148, 112));
 
+            // Display a red rectangle when the sound is clipping.
             if (decibels > 0)
             {
                 g.FillRectangle(
@@ -102,15 +113,12 @@ namespace GAP.CustomControls
                     Width,
                     zeroDbLocationY);
 
-                using (SolidBrush clippingBrush = new(Color.FromArgb(163, 24, 24)))
-                {
-                    g.FillRectangle(
-                        clippingBrush,
-                        0,
-                        Height - peakRectHeight,
-                        Width,
-                        peakRectHeight - zeroDbLocationY);
-                }
+                g.FillRectangle(
+                    _clippingBrush,
+                    0,
+                    Height - peakRectHeight,
+                    Width,
+                    peakRectHeight - zeroDbLocationY);
             }
             else
             {
@@ -132,7 +140,7 @@ namespace GAP.CustomControls
 
             if (decibels < MinDb)
                 return MinDb;
-            if (decibels > MaxDb)
+            else if (decibels > MaxDb)
                 return MaxDb;
 
             return (float)decibels;
@@ -141,15 +149,32 @@ namespace GAP.CustomControls
         public void StopSmoothly()
         {
             Amplitude = 0.0f;
-            _timer.Start();
+            _smoothStopTimer.Start();
+        }
+
+        public void EndStoppingAnimation()
+        {
+            _smoothStopTimer.Stop();
         }
 
         private void PeakMeter_Tick(object? sender, EventArgs e)
         {
-            if (_smoothNormalizedDb == 0.0f)
-                _timer.Stop();
+            if (_smoothDbNormalized == 0.0f)
+                _smoothStopTimer.Stop();
             else
                 Invalidate();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _backgroundBrush.Dispose();
+                _zeroDbLinePen.Dispose();
+                _clippingBrush.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
