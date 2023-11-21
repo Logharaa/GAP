@@ -132,10 +132,11 @@ namespace GAP.CustomControls
 
             // Convert slider range to pixel range (linear conversion).
             int sliderKnobX;
+
             if (Maximum == Minimum)
                 sliderKnobX = 0;
             else
-                sliderKnobX = ((Value - Minimum) * sliderBarWidth) / (Maximum - Minimum);
+                sliderKnobX = (Value - Minimum) * sliderBarWidth / (Maximum - Minimum);
 
             if (sliderKnobX > 0)
             {
@@ -152,8 +153,8 @@ namespace GAP.CustomControls
                 _sliderKnobBrush,
                 sliderKnobX,
                 sliderBarY - KnobRadius + SliderBarHeight/2,
-                KnobRadius * 2 - 1,
-                KnobRadius * 2 - 1);
+                KnobRadius * 2,
+                KnobRadius * 2);
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -188,8 +189,8 @@ namespace GAP.CustomControls
 
         private int GetSliderBarWidth()
         {
-            // Control width can change at runtime when the window is resized.
-            return Width - KnobRadius * 2;
+            // Slider width can change at runtime when the window is resized.
+            return Width - KnobRadius * 2 - 1;
         }
 
         private void UpdateCurrentValue(int mouseX)

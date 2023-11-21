@@ -8,6 +8,7 @@ namespace GAP
     {
         private WasapiOut? _wasapiOut;
         private AudioFileReader? _audioFileReader;
+        private Equalizer? _equalizer;
         private MeteringSampleProvider? _amplitudeProvider;
         private FourierTransformProvider? _fourierTransformProvider;
         private string? _audioFilePath;
@@ -15,45 +16,25 @@ namespace GAP
         private bool _isDraggingAudioSlider = false;
         private int _volumeBeforeMute = 50;
 
+        private EqualizerForm? _eqForm;
+        private readonly EqualizerBand[] _eqBands = new EqualizerBand[]
+        {
+            new(80.0f, 0.4f, 0.0f),
+            new(250.0f, 0.4f, 0.0f),
+            new(500.0f, 0.4f, 0.0f),
+            new(1500.0f, 0.4f, 0.0f),
+            new(3000.0f, 0.4f, 0.0f),
+            new(5000.0f, 0.4f, 0.0f),
+            new(10000.0f, 0.4f, 0.0f),
+        };
+
         public AudioPlayerForm()
         {
             InitializeComponent();
-            menuStrip.Renderer = new MenuStripRenderer();
+            menuStrip.Renderer = new GapMenuStripRenderer();
         }
 
-        // Custom renderer to change menuStrip colors (can't do it from designer).
-        private class MenuStripRenderer : ToolStripProfessionalRenderer
-        {
-            public MenuStripRenderer() : base(new CustomColors()) { }
-        }
-
-        private class CustomColors : ProfessionalColorTable
-        {
-            private readonly Color gray78 = Color.FromArgb(78, 78, 78);
-            private readonly Color gray56 = Color.FromArgb(56, 56, 56);
-
-            // Item background color on hover.
-            public override Color MenuItemSelectedGradientBegin => gray78;
-            public override Color MenuItemSelectedGradientEnd => gray78;
-
-            public override Color MenuItemBorder => gray78;
-
-            // Item background color on click.
-            public override Color MenuItemPressedGradientBegin => gray56;
-            public override Color MenuItemPressedGradientEnd => gray56;
-
-            public override Color MenuBorder => Color.FromArgb(108, 108, 108);
-
-            public override Color ToolStripDropDownBackground => gray56;
-            public override Color SeparatorDark => Color.FromArgb(88, 88, 88);
-
-            // Icon column background color.
-            public override Color ImageMarginGradientBegin => gray56;
-            public override Color ImageMarginGradientMiddle => gray56;
-            public override Color ImageMarginGradientEnd => gray56;
-        }
-
-        private void OpenAudioFileMenuItem_Click(object sender, EventArgs e)
+        private void OpenFileMenuItem_Click(object sender, EventArgs e)
         {
             if (openAudioFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -66,6 +47,19 @@ namespace GAP
                 audioSlider.Maximum = GetSecondsFromTimeSpan(_audioFileReader!.TotalTime);
                 totalTime.Text = _audioFileReader!.TotalTime.ToString(@"mm\:ss");
             }
+        }
+
+        private void ExitMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void AboutMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "GAP (for \"Gaël Audio Player\") is a personal project I created to familiarize myself with audio application development in C#. Feel free to use it for any purpose.",
+                "About GAP"
+            );
         }
 
         private void PlayPauseButton_MouseUp(object sender, MouseEventArgs e)
@@ -179,7 +173,9 @@ namespace GAP
             _wasapiOut = new();
             _wasapiOut.PlaybackStopped += OnPlaybackStopped;
             _audioFileReader = new(_audioFilePath) { Volume = GetNormalizedVolume(volumeSlider.Value) };
-            _amplitudeProvider = new(_audioFileReader, _audioFileReader.WaveFormat.SampleRate / 48);
+            _equalizer = new(_audioFileReader, _eqBands);
+            _eqForm?.UpdateEqualizer(_equalizer);
+            _amplitudeProvider = new(_equalizer, _audioFileReader.WaveFormat.SampleRate / 48);
             _amplitudeProvider.StreamVolume += OnStreamVolume;
             _fourierTransformProvider = new(_amplitudeProvider);
             _fourierTransformProvider.FftCalculated += OnFftCalculated;
@@ -246,6 +242,20 @@ namespace GAP
             _isDraggingAudioSlider = false;
         }
 
+        private void EqualizerButton_Click(object sender, EventArgs e)
+        {
+            if (_eqForm == null || _eqForm.IsDisposed)
+            {
+                _eqForm = new(_equalizer);
+                _eqForm.Show();
+            }
+            else
+            {
+                _eqForm.WindowState = FormWindowState.Normal;
+                _eqForm.Activate();
+            }
+        }
+
         private void VolumeSlider_ValueChanged(int oldValue, int newValue)
         {
             if (newValue == volumeSlider.Minimum
@@ -293,6 +303,40 @@ namespace GAP
         private static int GetSecondsFromTimeSpan(TimeSpan ts)
         {
             return (int)(ts.TotalSeconds + 0.5);
+        }
+    }
+
+
+    // Custom renderer to change menuStrip colors (can't do it from designer).
+    public class GapMenuStripRenderer : ToolStripProfessionalRenderer
+    {
+
+        public GapMenuStripRenderer() : base(new CustomColors()) { }
+
+        private class CustomColors : ProfessionalColorTable
+        {
+            private readonly Color gray78 = Color.FromArgb(78, 78, 78);
+            private readonly Color gray56 = Color.FromArgb(56, 56, 56);
+
+            // Item background color on hover.
+            public override Color MenuItemSelectedGradientBegin => gray78;
+            public override Color MenuItemSelectedGradientEnd => gray78;
+
+            public override Color MenuItemBorder => gray78;
+
+            // Item background color on click.
+            public override Color MenuItemPressedGradientBegin => gray56;
+            public override Color MenuItemPressedGradientEnd => gray56;
+
+            public override Color MenuBorder => Color.FromArgb(108, 108, 108);
+
+            public override Color ToolStripDropDownBackground => gray56;
+            public override Color SeparatorDark => Color.FromArgb(88, 88, 88);
+
+            // Icon column background color.
+            public override Color ImageMarginGradientBegin => gray56;
+            public override Color ImageMarginGradientMiddle => gray56;
+            public override Color ImageMarginGradientEnd => gray56;
         }
     }
 }

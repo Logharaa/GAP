@@ -13,8 +13,8 @@ namespace GAP.CustomControls
         private float _smoothDbNormalized = 0.0f;
 
         private readonly SolidBrush _backgroundBrush = new(Color.FromArgb(34, 34, 34));
-        private readonly Pen _zeroDbLinePen = new(Color.FromArgb(58, 58, 58), 1);
-        private readonly SolidBrush _clippingBrush = new(Color.FromArgb(163, 24, 24));
+        private readonly Pen _zeroDbLinePen = new(Color.FromArgb(54, 54, 54), 1);
+        private readonly SolidBrush _clippingBrush = new(Color.FromArgb(255, 0, 0));
         private readonly System.Windows.Forms.Timer _smoothStopTimer = new();
 
         public float Amplitude
@@ -106,19 +106,21 @@ namespace GAP.CustomControls
             // Display a red rectangle when the sound is clipping.
             if (decibels > 0)
             {
+                int zeroDbRectHeight = Height - zeroDbLocationY;
+
                 g.FillRectangle(
                     rectBrush,
                     0,
-                    Height - zeroDbLocationY,
+                    Height - zeroDbRectHeight,
                     Width,
-                    zeroDbLocationY);
+                    zeroDbRectHeight);
 
                 g.FillRectangle(
                     _clippingBrush,
                     0,
                     Height - peakRectHeight,
                     Width,
-                    peakRectHeight - zeroDbLocationY);
+                    peakRectHeight - zeroDbRectHeight);
             }
             else
             {

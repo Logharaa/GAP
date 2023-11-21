@@ -84,22 +84,24 @@ namespace GAP
             // openAudioFileMenuItem
             // 
             openAudioFileMenuItem.ForeColor = Color.White;
+            openAudioFileMenuItem.Image = Properties.Resources.audio_file;
             openAudioFileMenuItem.Name = "openAudioFileMenuItem";
-            openAudioFileMenuItem.Size = new Size(113, 22);
+            openAudioFileMenuItem.Size = new Size(117, 26);
             openAudioFileMenuItem.Text = "&Open...";
-            openAudioFileMenuItem.Click += OpenAudioFileMenuItem_Click;
+            openAudioFileMenuItem.Click += OpenFileMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(110, 6);
+            toolStripSeparator1.Size = new Size(114, 6);
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.ForeColor = Color.White;
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(113, 22);
+            toolStripMenuItem2.Size = new Size(117, 26);
             toolStripMenuItem2.Text = "E&xit";
+            toolStripMenuItem2.Click += ExitMenuItem_Click;
             // 
             // aboutToolStripMenuItem
             // 
@@ -108,6 +110,7 @@ namespace GAP
             aboutToolStripMenuItem.Padding = new Padding(8, 3, 8, 3);
             aboutToolStripMenuItem.Size = new Size(60, 25);
             aboutToolStripMenuItem.Text = "&About";
+            aboutToolStripMenuItem.Click += AboutMenuItem_Click;
             // 
             // audioFileName
             // 
@@ -196,6 +199,7 @@ namespace GAP
             equalizerButton.TabIndex = 6;
             equalizerButton.Text = "EQ";
             equalizerButton.UseVisualStyleBackColor = true;
+            equalizerButton.Click += EqualizerButton_Click;
             // 
             // forwardButton
             // 
@@ -272,6 +276,7 @@ namespace GAP
             audioSlider.Cursor = Cursors.Hand;
             audioSlider.KnobRadius = 13;
             audioSlider.Location = new Point(82, 30);
+            audioSlider.Maximum = 0;
             audioSlider.Name = "audioSlider";
             audioSlider.Size = new Size(736, 27);
             audioSlider.TabIndex = 0;
@@ -331,6 +336,7 @@ namespace GAP
             MinimumSize = new Size(700, 700);
             Name = "AudioPlayerForm";
             Padding = new Padding(0, 1, 0, 1);
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "GAP";
             menuStrip.ResumeLayout(false);
             menuStrip.PerformLayout();
